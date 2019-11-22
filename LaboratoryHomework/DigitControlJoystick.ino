@@ -23,15 +23,13 @@ bool joyMovedY = 0;
 bool joyMovedX = 0;
 const int minThreshold = 400;
 const int maxThreshold = 600;
-bool buttonState = 1;
 const int segSize = 8;
-int digit = 0;
 const int nOfDisplays = 4;
 const int nOfDigits = 10;
-//int dpState = LOW;
 int lastSW = 0;
-
+int digit = 0;
 int currentDisplay = 0;
+bool buttonState = 1;
 
 int segments[segSize] = {
 pinA, pinB, pinC, pinD, pinE, pinF, pinG, pinDP
@@ -44,7 +42,6 @@ pinD1, pinD2, pinD3, pinD4
 int numbers[nOfDisplays] = {
   0, 0, 0, 0
 };
-
 
 byte digitMatrix[nOfDigits][segSize - 1 ] = {
 { 1 , 1 , 1 , 1 , 1 , 1 , 0 }, // 0
@@ -59,13 +56,12 @@ byte digitMatrix[nOfDigits][segSize - 1 ] = {
 { 1 , 1 , 1 , 1 , 0 , 1 , 1}
 };
 
-
-void displayNumber( byte digit) {
-
+void displayNumber( byte digit, int state) {
   for ( int i = 0 ; i < segSize - 1 ; i++) {
     digitalWrite (segments[i], digitMatrix[digit][i]);
   }
-  digitalWrite (segments[segSize - 1], LOW);
+  digitalWrite (segments[segSize - 1], state);
+ delay(1);
 }
 
 void showDigit( int num) {
@@ -82,7 +78,7 @@ void setup () {
   for ( int i = 0 ; i < nOfDisplays; i++)  {
     pinMode (digits[i], OUTPUT );
   }
-    pinMode(pinSW, INPUT_PULLUP);
+  pinMode(pinSW, INPUT_PULLUP);
   Serial.begin(9600);
 }
 
@@ -119,7 +115,6 @@ void loop() {
     joyMovedX = false;
     }
 
-  delay(1);
   }
   if(buttonState == 0){
     yValue = analogRead(pinY);
@@ -142,14 +137,15 @@ void loop() {
   if(yValue >= minThreshold && yValue <= maxThreshold){
        joyMovedY = false;
       }
-  delay(1);
   }
   for ( int i = 0 ; i < nOfDisplays; i++) {
     showDigit(i);
     if(i == currentDisplay) {
-      digitalWrite(pinDP, HIGH);
+      digitalWrite(segments[7], HIGH);
           }
-    displayNumber(numbers[i]);
-    delay(1); 
+   else {
+    displayNumber(numbers[i],LOW);
+   }
+   delay(3);
   }  
 }

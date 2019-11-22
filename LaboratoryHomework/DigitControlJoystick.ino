@@ -143,9 +143,9 @@ void loop() {
     if(i == currentDisplay) {
       digitalWrite(segments[7], HIGH);
           }
-   else {
-    displayNumber(numbers[i],LOW);
-   }
-   delay(3);
+    else {
+     displayNumber(numbers[i],LOW);
+    }
+    delay(3);
   }  
 }

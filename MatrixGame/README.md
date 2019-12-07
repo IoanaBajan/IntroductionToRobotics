@@ -1,7 +1,7 @@
 ## Led Matrix Game - Crossy Road
 <hr>
 
-##**Hardware**
+**Hardware**
   - 8x8 LED matrix
   - LCD
   - Joystick
@@ -12,4 +12,4 @@
   <br>
   
   **Purpose of the game**<br>
-    You get past a level by crossing the street. Win the game by reaching the destination.
+    You pass a level by crossing the street. Win the game by reaching the destination.

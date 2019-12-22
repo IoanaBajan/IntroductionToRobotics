@@ -13,27 +13,27 @@ const int D6 = 3;
 const int D7 = 2;
 const int RS = 9;
 const int enable = 8;
-
-
  
- //variables used to save millis() value at a given time
+//variables used to save millis() value at a given time
 unsigned long last = 0;    
 unsigned long current = 0;
 
-int positionX;    //value of x axis used for lcd menu
+//value of x axis used for lcd menu
+int positionX;    
 int buttonState;
-int lastButtonState = HIGH;   //use for debounce fucntion
+
+//used for debounceButton() function
+int lastButtonState = HIGH;   
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;
-
-int mainScreen = 0;
 
 //use to display messages on the lsd
 int ok = 0;
 int ok2 = 0;
 int printedMessage = 0;
 
-
+//variables for each round's properties
+int mainScreen = 0;
 int rounds = 0;
 int score = 0;
 int bestScore = 0;
@@ -41,7 +41,7 @@ unsigned int lives = 3;
 int levelValue = 1;
 
 unsigned long displayTime;
-unsigned long beginGame = 0; //0 at the beginning of each round
+unsigned long beginGame = 0; //0 at the beginning of each round, helps calculate the score
 unsigned long wait = 0;
 
 //variable used to move the joystick 
@@ -52,11 +52,11 @@ int joyMovedY = false;
 int xValue;
 int yValue;
 
-
 struct player {
   int col, row;
-  int notDead = 1;
+  int notDead = 1; //when equal to 3 -> the player gets an extra life
 };
+
 player p;
 
 //timers for cars
@@ -114,8 +114,7 @@ byte dead[8][8] =
 LiquidCrystal lcd(RS, enable, D4, D5, D6, D7);                  //intialize lcd
 LedControl lc = LedControl(12, 11, 10, 1); //DIN, CLK, LOAD, No. DRIVER   //intialize led matrix
 
-void setup() {
-  
+void setup() {  
   Serial.begin(9600);
   lcd.begin(16, 2);
   pinMode(pinSW, INPUT_PULLUP);
@@ -178,19 +177,16 @@ void displayCoin() {
 }
 
 void moveCar(int pos, int sizeCar, unsigned long int timer) {
-
+//given a postion, dimensions and speed it moves a car 
   lc.setLed(0, pos, (timer - 1) % 8, 0);
   matrix[pos][(timer - 1) % 8] = 0;
   for (int i = 0; i < sizeCar; i++) {
     matrix[pos][(timer + i) % 8] = 1;
 
   }
-
 }
 
 //--GAME DYNAMICS--
-
-
 void calculateTime() {
 //calculates the speed of each car
 
@@ -300,7 +296,7 @@ void movePlayer() {
 }
 
 void reset() {
-  
+//reinitializes the game
   showGameOver();
   delay(1000);
   p.col = 2;
@@ -314,7 +310,6 @@ lostGame();
 
 // --GAMEPLAY--
 void startGame() {
-
   lcd.setCursor(0, 0);
   lcd.print("Lives:");
   lcd.print(lives);
@@ -357,7 +352,6 @@ void startGame() {
     if(lives == 0) {
       reset();
       lostGame();
-     // mainMenu();
     }
   }
   if (levelValue == 3 || levelValue == 4) {
@@ -375,7 +369,6 @@ void startGame() {
     if(lives == 0) {
       reset();
       lostGame();
-     // mainMenu();
     }
   }
 
@@ -431,13 +424,16 @@ void startGame() {
     p.notDead = 0;
   }
 }
+
 void lostGame() {
+ //clears the matrix
   for ( int i = 1; i < 7; i++)
     for (int j = 0; j < 8; j++)
     {
       matrix[i][j] = 0;
     }
 }
+
 bool checkIfDead(int x, int y) {
   if (x != 7 && x != 0 && y != 7 && y != 0) {
     if (matrix[x][y] == 1) {
@@ -505,8 +501,8 @@ void mainMenu() {
   } else {
     lcd.print(" INFO");
   }
-
 }
+
 void debounceButton() {
   int reading = digitalRead(pinSW);
   if (reading != lastButtonState) {
@@ -531,7 +527,6 @@ void debounceButton() {
 }
 
 void loop() {
-
   if (mainScreen == 0) {
     showDraw();
     debounceButton();
@@ -648,14 +643,11 @@ void loop() {
         lcd.clear();
         ok = 1;
       }
-   
       lcd.setCursor(0, 0);
       lcd.print("Bajan Ioana");
       lcd.setCursor(0, 1);
       lcd.print("UnibucRobotics");
       debounceButton();
-
     }
-
   }
 }

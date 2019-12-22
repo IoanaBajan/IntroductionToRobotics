@@ -17,7 +17,8 @@
    In the beginning of the game you have 3 lives,if you get hit by a car you lose a life and start over 
    the level from start position. If you pass 3 levels without losing any lives you get an extra one. 
      
-   Your score will increase depending on how fast you cross the street and will decrease by 100 points for each life you lose. 
+   Your score will increase depending on how fast you cross the street and will decrease by 100 points 
+   for each life you lose. 
    
    You can pause the game at any time if you press the joystick button :) 
    

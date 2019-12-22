@@ -32,5 +32,8 @@
   **Purpose of the game**<br>
     You pass a level by crossing the street. Win the game by reaching the destination.
 
-**Demo**<br>
-[YOUTUBE VIDEO]
+
+[DEMO YOUTUBE VIDEO WITH FUNCTIONALITIES](https://www.youtube.com/watch?v=lKKpBX-JF58)
+
+**Image of the game**
+![](https://github.com/IoanaBajan/IntroductionToRobotics/blob/master/MatrixGame/game3.jpg)

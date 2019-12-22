@@ -1,46 +1,65 @@
 #include "LedControl.h"
 #include <LiquidCrystal.h>
+
+//joystick pins
 const int pinSW = A0;
 const int pinY = A1;
 const int pinX = A2;
+
+//LCD pins
 const int D4 = 5;
 const int D5 = 4;
 const int D6 = 3;
 const int D7 = 2;
 const int RS = 9;
 const int enable = 8;
-int positionX;
-unsigned long last = 0;
+
+
+ 
+ //variables used to save millis() value at a given time
+unsigned long last = 0;    
 unsigned long current = 0;
-int levelValue = 1;
+
+int positionX;    //value of x axis used for lcd menu
 int buttonState;
-int lastButtonState = HIGH;
-const int interval = 5000;
+int lastButtonState = HIGH;   //use for debounce fucntion
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+
 int mainScreen = 0;
+
+//use to display messages on the lsd
 int ok = 0;
 int ok2 = 0;
 int printedMessage = 0;
+
+
 int rounds = 0;
 int score = 0;
 int bestScore = 0;
-unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 50;
-unsigned long displayTime;
-unsigned long beginGame = 0; //DE FACUT 0 LA FINALUL FIECARUI JOC
-unsigned long wait = 0;
-const int intervalMoveCar = 100;
 unsigned int lives = 3;
+int levelValue = 1;
+
+unsigned long displayTime;
+unsigned long beginGame = 0; //0 at the beginning of each round
+unsigned long wait = 0;
+
+//variable used to move the joystick 
 const int minThreshold = 300;
 const int maxThreshold = 700;
 int joyMovedX = false;
 int joyMovedY = false;
 int xValue;
 int yValue;
+
+
 struct player {
   int col, row;
   int notDead = 1;
 };
+player p;
 
+//timers for cars
 long int t0 = 0;
 long int t1 = 0;
 long int t2 = 0;
@@ -50,10 +69,11 @@ int t01;
 int t02;
 int t03;
 int t04;
+
 int coinX;
 int coinY;
-player p;
 
+//main matrix
 byte matrix[8][8] =
 { {1, 1, 1, 1, 1, 1, 1, 1},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -64,6 +84,9 @@ byte matrix[8][8] =
   {0, 0, 0, 0, 0, 0, 0, 0},
   {1, 1, 1, 1, 1, 1, 1, 1}
 };
+
+//matrix used to display a smiley face
+//when passing a level
 byte pause[8][8] =
 { {0, 0, 1, 1, 1, 1, 0, 0},
   {0, 1, 0, 0, 0, 0, 1, 0},
@@ -74,6 +97,9 @@ byte pause[8][8] =
   {0, 1, 0, 0, 0, 0, 1, 0},
   {0, 0, 1, 1, 1, 1, 0, 0}
 };
+
+//matrix used to display a sad face
+//when losing a life
 byte dead[8][8] =
 { {0, 0, 1, 1, 1, 1, 0, 0},
   {0, 1, 0, 0, 0, 0, 1, 0},
@@ -85,28 +111,21 @@ byte dead[8][8] =
   {0, 0, 1, 1, 1, 1, 0, 0}
 };
 
-LiquidCrystal lcd(RS, enable, D4, D5, D6, D7);
-LedControl lc = LedControl(12, 11, 10, 1); //DIN, CLK, LOAD, No. DRIVER
+LiquidCrystal lcd(RS, enable, D4, D5, D6, D7);                  //intialize lcd
+LedControl lc = LedControl(12, 11, 10, 1); //DIN, CLK, LOAD, No. DRIVER   //intialize led matrix
 
 void setup() {
+  
   Serial.begin(9600);
   lcd.begin(16, 2);
   pinMode(pinSW, INPUT_PULLUP);
   pinMode(pinX, INPUT);
   lcd.clear();
-//  current = millis();
-//  while((current - last) > 1000) {
-//    lcd.print("Hello!");
-//    lcd.setCursor(1,1);
-//    lcd.print("Let's play!");
-//    
-//  last = millis();    
-//  }
 
-    lcd.print("Hello!");
-    lcd.setCursor(1,1);
-    lcd.print("Let's play!");
-    delay(1000);
+  lcd.print("Hello!");
+  lcd.setCursor(1, 1);
+  lcd.print("Let's play!");
+  delay(1000);
   lcd.clear();
   lcd.setCursor(1, 0);
   lcd.print(">Start");
@@ -123,18 +142,20 @@ void setup() {
   p.col = 3;
   Serial.begin(9600);
 }
+
 // --GRAFICS--
 void showMatrix() {
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 8; col++) {
-      lc.setLed(0, row, col, matrix[row][col] % 2);
+      lc.setLed(0, row, col, matrix[row][col] % 2);   //displays the led matrix
     }
   }
-  lc.setLed(0, p.row, p.col, 1);
+  lc.setLed(0, p.row, p.col, 1);      //displays the position of the player on the led matrix
 
 }
 
 void showDraw() {
+  //draws a smiley face on the led matrix
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 8; col++) {
       lc.setLed(0, row, col, pause[row][col]);
@@ -142,6 +163,7 @@ void showDraw() {
   }
 }
 void showGameOver() {
+  //draws a sad face on the led matrix
   for (int row = 0; row < 8; row++) {
     for (int col = 0; col < 8; col++) {
       lc.setLed(0, row, col, dead[row][col]);
@@ -167,7 +189,10 @@ void moveCar(int pos, int sizeCar, unsigned long int timer) {
 }
 
 //--GAME DYNAMICS--
+
+
 void calculateTime() {
+//calculates the speed of each car
 
   if (millis() - t0 > 100) {
     movePlayer();
@@ -242,54 +267,52 @@ void movePlayer() {
   }
 
   if ( checkIfDead(p.row, p.col) == true) {
-    if( score > bestScore) {
+    if ( score > bestScore) {
       bestScore = score;
     }
     if (p.row != 7) {
-      
+
       Serial.println(p.row);
       lives--;
+      p.notDead = 0;
       score = score - 10;
       lostGame();
       p.col = 2;
       p.row = 1;
-      if (lives) {
-        
+      if (lives > 0) {
+
         for (int i = 0; i < 8; i++)
           for (int j = 0; j < 8; j++)
             if (i == j || i + j == 7) {
               lc.setLed(0, i, j, 1);
-            }   
-           delay(1000);
-            
-           showMatrix();
-                   }
-       
-
-      }
-      else {
-        showGameOver();
+            }
         delay(1000);
-        reset();
-       }
+        showMatrix();
+      }
+    }
+    else {
+      showGameOver();
+      delay(1000);
+      reset();
+     lostGame();
+    }
   }
 }
+
 void reset() {
-  lostGame();
+  
   showGameOver();
   delay(1000);
   p.col = 2;
   p.row = 1;
   p.notDead = 0;
   lives = 3;
- // levelValue = 0;
   score = 0;
-  //displayCoin();
-
+lostGame();
 }
 
-// --GAMEPLAY--
 
+// --GAMEPLAY--
 void startGame() {
 
   lcd.setCursor(0, 0);
@@ -314,7 +337,7 @@ void startGame() {
     if (p.notDead == 3) {
       lives++;
       p.notDead = 0;
-    
+
     }
     p.notDead++;
     levelValue++;
@@ -330,9 +353,11 @@ void startGame() {
     lc.setLed(0, p.row, p.col, 0);
     movePlayer();
     lc.setLed(0, p.row, p.col, 1);
-
-    if (checkIfWin(p.row) == true) {
-
+    
+    if(lives == 0) {
+      reset();
+      lostGame();
+     // mainMenu();
     }
   }
   if (levelValue == 3 || levelValue == 4) {
@@ -347,13 +372,18 @@ void startGame() {
       showDraw();
       delay(1000);
     }
+    if(lives == 0) {
+      reset();
+      lostGame();
+     // mainMenu();
+    }
   }
 
   if (levelValue == 4 || levelValue == 5) {
     moveCar(2, 4, t01);
     moveCar(4, 3, t03);
     moveCar(6, 3, t04);
-    
+
     lc.setLed(0, p.row, p.col, 0);
     movePlayer();
     lc.setLed(0, p.row, p.col, 1);
@@ -362,13 +392,18 @@ void startGame() {
       showDraw();
       delay(1000);
     }
+    
+    if(lives == 0) {
+      reset();
+      lostGame();
+    }
   }
-  
+
   if (levelValue == 6 || levelValue == 7) {
     moveCar(2, 4, t02);
     moveCar(4, 3, t03);
     moveCar(6, 4, t04);
-    
+
     lc.setLed(0, p.row, p.col, 0);
     movePlayer();
     lc.setLed(0, p.row, p.col, 1);
@@ -377,6 +412,23 @@ void startGame() {
       showDraw();
       delay(1000);
     }
+    
+  }
+
+  if ( levelValue > 7 ) {
+    showDraw();
+    lcd.clear();
+    delay(1000);
+    lcd.print("Congratulation!");
+   
+    lcd.setCursor(0,1);
+    lcd.print("you won the game");
+    delay(1000);
+    mainScreen = 0;
+    levelValue = 1;
+    score = 0;
+    lives = 3;
+    p.notDead = 0;
   }
 }
 void lostGame() {
@@ -401,8 +453,8 @@ bool checkIfWin(int row) {
   else return false;
 }
 
-// --LCD--
 
+// --LCD--
 void mainMenu() {
   xValue = analogRead(pinX);
   if (xValue > maxThreshold && joyMovedX == false) {
@@ -470,7 +522,7 @@ void debounceButton() {
         ok2 = 0;
         rounds = 0;
         printedMessage = 0;
-        wait = millis();
+        //wait = millis();
         lcd.clear();
       }
     }
@@ -493,9 +545,9 @@ void loop() {
         lcd.clear();
         ok = 1;
       }
-      if (rounds <= 6) {
-        if(beginGame == 0)
-           beginGame = millis();
+      if (rounds <= 8) {
+        if (beginGame == 0)
+          beginGame = millis();
         startGame();
         if (levelValue == 100) {
           levelValue = 99;
@@ -596,10 +648,12 @@ void loop() {
         lcd.clear();
         ok = 1;
       }
+   
       lcd.setCursor(0, 0);
       lcd.print("Bajan Ioana");
       lcd.setCursor(0, 1);
       lcd.print("UnibucRobotics");
+      debounceButton();
 
     }
 
